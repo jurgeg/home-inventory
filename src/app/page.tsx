@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, TrendingUp, Package, MapPin, Tag, Camera } from "lucide-react";
+import { Search, TrendingUp, Package, MapPin, Tag, Camera, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { ItemListCard } from "@/components/items/item-list-card";
 
