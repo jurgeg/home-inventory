@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
+export const maxDuration = 60; // Allow up to 60s for AI vision call
+
 const CATEGORIES = [
   "Electronics",
   "Furniture",
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: "moonshotai/kimi-k2.5",
+      model: "meta/llama-3.2-90b-vision-instruct",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         {
