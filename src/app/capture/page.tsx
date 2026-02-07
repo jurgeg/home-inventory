@@ -16,6 +16,8 @@ export default function CapturePage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ItemIdentification | null>(null);
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [compressedBase64, setCompressedBase64] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,6 +35,7 @@ export default function CapturePage() {
       const compressed = await compressImage(file);
       // compressImage returns a data URL string - extract base64 part
       const base64 = compressed.split(",")[1] || compressed;
+      setCompressedBase64(base64);
       const aiResult = await identifyItem({ image: base64 });
       setResult(aiResult);
     } catch (err) {
@@ -42,9 +45,40 @@ export default function CapturePage() {
     }
   };
 
-  const handleSave = () => {
-    // TODO: save to Supabase
-    setSaved(true);
+  const handleSave = async () => {
+    if (!result) return;
+    setIsSaving(true);
+    try {
+      const formData = {
+        name: (document.getElementById("field-name") as HTMLInputElement)?.value || result.name,
+        description: (document.getElementById("field-desc") as HTMLInputElement)?.value || result.description,
+        category: (document.getElementById("field-category") as HTMLInputElement)?.value || result.category,
+        brand: (document.getElementById("field-brand") as HTMLInputElement)?.value || result.brand,
+        condition: (document.getElementById("field-condition") as HTMLInputElement)?.value || result.condition,
+        estimatedValueLow: parseFloat((document.getElementById("field-value-low") as HTMLInputElement)?.value?.replace("£", "") || "0"),
+        estimatedValueHigh: parseFloat((document.getElementById("field-value-high") as HTMLInputElement)?.value?.replace("£", "") || "0"),
+        tags: result.tags,
+        photoBase64: compressedBase64,
+        aiRawResponse: result,
+      };
+
+      const res = await fetch("/api/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save");
+      }
+
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save item");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -113,36 +147,41 @@ export default function CapturePage() {
                     <p className="text-xs text-muted-foreground">AI identification complete — edit if needed</p>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Name</p>
-                      <Input defaultValue={result.name} className="h-9" />
+                      <Input id="field-name" defaultValue={result.name} className="h-9" />
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Category</p>
-                      <Input defaultValue={result.category} className="h-9" />
+                      <Input id="field-category" defaultValue={result.category} className="h-9" />
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Brand</p>
-                      <Input defaultValue={result.brand || ""} className="h-9" />
+                      <Input id="field-brand" defaultValue={result.brand || ""} className="h-9" />
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Description</p>
-                      <Input defaultValue={result.description} className="h-9" />
+                      <Input id="field-desc" defaultValue={result.description} className="h-9" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Value (low)</p>
-                        <Input defaultValue={`£${result.estimatedValueLow}`} className="h-9" />
+                        <Input id="field-value-low" defaultValue={`£${result.estimatedValueLow}`} className="h-9" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Value (high)</p>
-                        <Input defaultValue={`£${result.estimatedValueHigh}`} className="h-9" />
+                        <Input id="field-value-high" defaultValue={`£${result.estimatedValueHigh}`} className="h-9" />
                       </div>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Condition</p>
-                      <Input defaultValue={result.condition} className="h-9" />
+                      <Input id="field-condition" defaultValue={result.condition} className="h-9" />
                     </div>
-                    <Button className="w-full" size="lg" onClick={handleSave}>
-                      Save Item
+                    <Button className="w-full" size="lg" onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? (
+                        <span className="flex items-center gap-2">
+                          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Saving...
+                        </span>
+                      ) : "Save Item"}
                     </Button>
                     <Button variant="outline" className="w-full" size="lg" onClick={handleReset}>
                       Retake Photo
