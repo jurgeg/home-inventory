@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BottomNav } from "@/components/navigation/bottom-nav";
 
 export const metadata: Metadata = {
   title: "Home Inventory",
@@ -7,8 +8,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Home Inventory",
+    statusBarStyle: "black-translucent",
+    title: "Inventory",
   },
 };
 
@@ -25,7 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="bg-warm_white text-gray-900 antialiased">{children}</body>
+      <body className="antialiased">
+        <main className="pb-20 min-h-screen">{children}</main>
+        <BottomNav />
+      </body>
     </html>
   );
 }
