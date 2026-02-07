@@ -134,11 +134,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabase();
+    const q = request.nextUrl.searchParams.get("q");
 
-    const { data: items, error } = await supabase
+    let query = supabase
       .from("items")
       .select(`
         *,
@@ -148,6 +149,12 @@ export async function GET() {
       .eq("user_id", DEFAULT_USER_ID)
       .eq("is_archived", false)
       .order("created_at", { ascending: false });
+
+    if (q) {
+      query = query.ilike("name", `%${q}%`);
+    }
+
+    const { data: items, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
