@@ -7,6 +7,12 @@ import { Search, TrendingUp, Package, MapPin, Tag, Camera, ChevronRight } from "
 import Link from "next/link";
 import { ItemListCard } from "@/components/items/item-list-card";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+function getPhotoUrl(path: string) {
+  return `${SUPABASE_URL}/storage/v1/object/public/item-photos/${path}`;
+}
+
 interface Item {
   id: string;
   name: string;
@@ -147,7 +153,9 @@ export default function DashboardPage() {
           <div>
             <h2 className="font-semibold mb-3">Recently Added</h2>
             <div className="space-y-2">
-              {items.slice(0, 10).map((item) => (
+              {items.slice(0, 10).map((item) => {
+                const primaryPhoto = item.item_photos?.find((p) => p.is_primary) || item.item_photos?.[0];
+                return (
                 <ItemListCard
                   key={item.id}
                   id={item.id}
@@ -157,9 +165,10 @@ export default function DashboardPage() {
                   estimatedValueHigh={item.estimated_value_high}
                   categoryName={item.categories?.name}
                   categoryIcon={item.categories?.icon}
+                  photoUrl={primaryPhoto ? getPhotoUrl(primaryPhoto.storage_path) : null}
                   createdAt={item.created_at}
-                />
-              ))}
+                />);
+              })}
             </div>
           </div>
         </>

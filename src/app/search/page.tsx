@@ -8,6 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, SlidersHorizontal, Package, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+function getPhotoUrl(path: string) {
+  return `${SUPABASE_URL}/storage/v1/object/public/item-photos/${path}`;
+}
+
 interface Item {
   id: string;
   name: string;
@@ -18,6 +24,7 @@ interface Item {
   condition: string;
   created_at: string;
   categories: { name: string; icon: string } | null;
+  item_photos: { storage_path: string; is_primary: boolean }[];
 }
 
 const filterChips = [
@@ -141,12 +148,18 @@ function SearchContent() {
         </div>
       ) : filtered.length > 0 ? (
         <div className="space-y-2">
-          {filtered.map((item) => (
+          {filtered.map((item) => {
+            const primaryPhoto = item.item_photos?.find((p) => p.is_primary) || item.item_photos?.[0];
+            return (
             <Link key={item.id} href={`/items/${item.id}`}>
               <Card className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
                 <CardContent className="p-3 flex gap-3 items-center">
-                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0 text-lg">
-                    {item.categories?.icon || "📦"}
+                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0 text-lg overflow-hidden">
+                    {primaryPhoto ? (
+                      <img src={getPhotoUrl(primaryPhoto.storage_path)} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      item.categories?.icon || "📦"
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{item.name}</p>
@@ -173,7 +186,7 @@ function SearchContent() {
                 </CardContent>
               </Card>
             </Link>
-          ))}
+          )})}
         </div>
       ) : allItems.length === 0 ? (
         <div className="pt-16 text-center text-muted-foreground">
