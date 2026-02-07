@@ -143,8 +143,7 @@ export async function GET() {
       .select(`
         *,
         categories(name, icon),
-        item_photos(storage_path, is_primary),
-        locations(room, spot, properties(name))
+        item_photos(storage_path, is_primary)
       `)
       .eq("user_id", DEFAULT_USER_ID)
       .eq("is_archived", false)
